@@ -10,7 +10,7 @@ allprojects {
     repositories {
         ...
         maven {
-            url  "https://getzowie.bintray.com/zowie-android-sdk"
+            url  "https://zowieteam.bintray.com/zowie-android-sdk"
         }
     }
 }
@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.2'
+    implementation 'ai.zowie:android-sdk:0.0.3'
 }
 
 ```
