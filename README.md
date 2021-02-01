@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.3'
+    implementation 'ai.zowie:android-sdk:0.0.4'
 }
 
 ```
