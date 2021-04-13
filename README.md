@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.5'
+    implementation 'ai.zowie:android-sdk:0.0.8'
 }
 
 ```
@@ -235,8 +235,10 @@ val zowieColors =  ZowieColors {
     separatorColor = YOUR_VALUE
     chatMessagesLoadingColor = YOUR_VALUE
     quickButtonBackgroundColor = YOUR_VALUE
+    quickButtonBackgroundPressedColor = YOUR_VALUE
     quickButtonTextColor = YOUR_VALUE
     quickButtonPressedStrokeColor = YOUR_VALUE
+    quickButtonStrokeColor = YOUR_VALUE
     actionButtonBackgroundColor = YOUR_VALUE
     actionButtonBackgroundPressedColor = YOUR_VALUE
     actionButtonTextColor = YOUR_VALUE
@@ -250,6 +252,7 @@ val zowieColors =  ZowieColors {
     playVideoButtonBackgroundColor = YOUR_VALUE
     playVideoButtonBackgroundPressedColor = YOUR_VALUE
     playVideoButtonPlayIconColor = YOUR_VALUE
+    typingAnimationTintColor = YOUR_VALUE
 }
 
 Zowie.setColors(zowieColors)
