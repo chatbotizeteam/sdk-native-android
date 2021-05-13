@@ -1,7 +1,7 @@
 
 # Zowie Android SDK
 
-  
+
 
 ## Installation
 1. Add Zowie maven repository to your project's `build.gradle` file:
@@ -10,7 +10,7 @@ allprojects {
     repositories {
         ...
         maven {
-            url  "https://zowieteam.bintray.com/zowie-android-sdk"
+            url  "https://zowie.jfrog.io/artifactory/zowie-android-sdk"
         }
     }
 }
@@ -20,13 +20,13 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.8'
+    implementation 'ai.zowie:android-sdk:0.0.9'
 }
 
 ```
 ## Usage
 
-  
+
 
 ### Initialization
 
@@ -49,11 +49,10 @@ class MyApplication : Application() {
 In second step, you have to create `ZowieConfiguration` and set it by calling `Zowie.setConfiguration()`
 ```kotlin
 val configuration = ZowieConfiguration {
-    userId = "YOUR_USER_ID"
-    conversationId = "YOUR_CONVERSATION_ID"
     instanceId = "YOUR_INSTANCE_ID"
     conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL"
-    authenticationType = ZowieAuthenticationType.Raw 
+    authenticationType = ZowieAuthenticationType.Anonymous
+    chatHost = "OPTIONAL_CHAT_HOST"
 }
 
 Zowie.setConfiguration(configuration)
@@ -61,19 +60,17 @@ Zowie.setConfiguration(configuration)
 Alternatively you can use **Builder** to create `ZowieConfiguration`.\
 **Builders are available for all classes needed for sdk setup.**
 ```kotlin
-val configuration = 
+val configuration =
     ZowieConfiguration.Builder()
-        .setUserId("YOUR_USER_ID")
-        .setConversationId("YOUR_CONVERSATION_ID")
         .setInstanceId("YOUR_INSTANCE_ID")
         .setConversationInitReferral("OPTIONAL_CONVERSATION_INIT_REFERRAL")
-        .setAuthenticationType(ZowieAuthenticationType.Raw)
+        .setAuthenticationType(ZowieAuthenticationType.Anonymous)
+        .setChatHost("OPTIONAL_CHAT_HOST")
         .build()
-        
+
 Zowie.setConfiguration(configuration)
 ```
-If your integration requires token authentication you can replace `ZowieAuthenticationType.Raw()` with `ZowieAuthenticationType.JwtToken("YOUR_TOKEN")`.
-
+If your integration requires token authentication you can replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken()`.
 
 ### Chat UI
 Zowie chat is a simple android Fragment.
@@ -107,8 +104,8 @@ val metadata = ZowieMetadata {
 
 Zowie.setMetadata(
     metadata = metadata,
-    onErrorListener = { 
-         // on error action 
+    onErrorListener = {
+         // on error action
     },
     onSuccessListener = {
          // on success action
@@ -162,14 +159,37 @@ To set context call `Zowie.setContext()`
 ```kotlin
 Zowie.setContext(
     contextId = "YOUR_CONTEXT",
-    onErrorListener = { 
-        // on error action 
+    onErrorListener = {
+        // on error action
     },
     onSuccessListener = {
         // on success action
     }
 )
 ```
+
+### Anonymous session
+To clear Anonymous session call `Zowie.clearAnonymousSession()`
+```
+Zowie.clearAnonymousSession(
+    instanceId = "YOUR_INSTANCE_ID",
+    onErrorListener = {
+        // on error action
+    },
+    onSuccessListener = {
+        // on success action
+    }
+)
+```
+
+### Initialization error
+To set initialization error listener call `Zowie.setOnInitializationErrorListener()`
+```
+Zowie.setOnInitializationErrorListener {
+    // initialization error action
+}
+```
+
 ## Customization
 
 You can fully customize chat colors and strings. **Make sure that customization methods are called before showing chat fragment.**
@@ -182,6 +202,7 @@ The only supported language in this SDK is `english`. If you need more localizat
 val zowieStrings = ZowieStrings {
     newMessageHint = YOUR_VALUE
     messageStatusDelivered = YOUR_VALUE
+    messageStatusRead = YOUR_VALUE
     messageStatusSendingErrorMessage = YOUR_VALUE
     messageStatusSendingErrorTryAgain = YOUR_VALUE
     readAndWriteStoragePermissionAlertTitle = YOUR_VALUE
@@ -210,6 +231,8 @@ Feel free to set up color branding however you like.
 val zowieColors =  ZowieColors {
     messageStatusSendingErrorColor = YOUR_VALUE
     messageStatusDeliveredColor = YOUR_VALUE
+    messageStatusReadColor = YOUR_VALUE
+    messageAuthorNameTextColor = YOUR_VALUE
     sentMessageBackgroundColor = YOUR_VALUE
     sentMessageContentsColor = YOUR_VALUE
     sentMessageImageUploadLoadingColor = YOUR_VALUE
@@ -253,6 +276,10 @@ val zowieColors =  ZowieColors {
     playVideoButtonBackgroundPressedColor = YOUR_VALUE
     playVideoButtonPlayIconColor = YOUR_VALUE
     typingAnimationTintColor = YOUR_VALUE
+    announcementBackgroundColor = YOUR_VALUE
+    announcementStrokeColor = YOUR_VALUE
+    announcementTextColor = YOUR_VALUE
+    announcementIconColor = YOUR_VALUE
 }
 
 Zowie.setColors(zowieColors)
