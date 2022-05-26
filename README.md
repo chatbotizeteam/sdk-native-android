@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.11'
+    implementation 'ai.zowie:android-sdk:0.0.14'
 }
 
 ```
@@ -140,19 +140,8 @@ Zowie.disableNotifications(
 )
 ```
 
-###  User status
-To set user's status call `Zowie.setUserStatus()`
-```kotlin
-Zowie.setUserStatus(
-    isActive = YOUR_BOOLEAN_VALUE,
-    onErrorListener = {
-        // on error action
-    },
-    onSuccessListener = {
-        // on success action
-    }
-)
-```
+###  (DEPRECATED) User status
+Setting user status from outside of ZowieSdk is no longer needed an should be removed from client apps. Current version of ZowieSdk checks, and sets user status internally.
 
 ### Context
 To set context call `Zowie.setContext()`
@@ -284,3 +273,11 @@ val zowieColors =  ZowieColors {
 
 Zowie.setColors(zowieColors)
 ```
+
+## Common issues:
+
+### RxJava3 - ApolloNetworkException thrown as UndeliverableException
+During initialization ZowieSdk sets `RxJava3` error handler (`RxJavaPlugins.setErrorHandler`) internally but only if it's not set by your app.
+ZowieSdk also uses `apollo-kotlin` internally, and because of that there is a possibility that `ApolloNetworkException` will be thrown as RxJava `UndeliverableException`.
+If your app sets RxJava error handler, be sure to catch `ApolloNetworkException`, otherwise unexpected crashes can occur.
+If your app does not set error handler, all `UndeliverableExceptions` will be consumed by ZowieSdk.
