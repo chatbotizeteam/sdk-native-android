@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.0.14'
+    implementation 'ai.zowie:android-sdk:0.0.15'
 }
 
 ```
@@ -127,7 +127,7 @@ Zowie.enableNotifications(
     }
 )
 ```
-\
+
 If you want to disable notifications call `Zowie.disableNotifications()`
 ```kotlin
 Zowie.disableNotifications(
@@ -222,6 +222,8 @@ val zowieColors =  ZowieColors {
     messageStatusDeliveredColor = YOUR_VALUE
     messageStatusReadColor = YOUR_VALUE
     messageAuthorNameTextColor = YOUR_VALUE
+    sectionDateTimeTextColor = YOUR_VALUE
+    messageDateTimeTextColor = YOUR_VALUE
     sentMessageBackgroundColor = YOUR_VALUE
     sentMessageContentsColor = YOUR_VALUE
     sentMessageImageUploadLoadingColor = YOUR_VALUE
@@ -274,10 +276,22 @@ val zowieColors =  ZowieColors {
 Zowie.setColors(zowieColors)
 ```
 
+### Layout configuration
+You can customize chat layout behaviour using `Zowie.setLayoutConfiguration()` method.
+
+```kotlin
+val layoutConfiguration = ZowieLayoutConfiguration {
+    showConsultantAvatar = YOUR_VALUE
+    consultantNameMode = YOUR_VALUE
+}
+Zowie.setLayoutConfiguration(layoutConfiguration)
+```
+
 ## Common issues:
 
 ### RxJava3 - ApolloNetworkException thrown as UndeliverableException
-During initialization ZowieSdk sets `RxJava3` error handler (`RxJavaPlugins.setErrorHandler`) internally but only if it's not set by your app.
+**This issue may occur in versions from `0.0.1` to `0.0.14`. In version `0.0.15` RxJava3 usage was removed from ZowieSdk.**
+During initialization ZowieSdk sets RxJava3 error handler (`RxJavaPlugins.setErrorHandler`) internally but only if it's not set by your app.
 ZowieSdk also uses `apollo-kotlin` internally, and because of that there is a possibility that `ApolloNetworkException` will be thrown as RxJava `UndeliverableException`.
 If your app sets RxJava error handler, be sure to catch `ApolloNetworkException`, otherwise unexpected crashes can occur.
 If your app does not set error handler, all `UndeliverableExceptions` will be consumed by ZowieSdk.
