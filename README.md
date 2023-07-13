@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.1.2'
+    implementation 'ai.zowie:android-sdk:0.1.4'
 }
 
 ```
@@ -177,6 +177,23 @@ To set initialization error listener call `Zowie.setOnInitializationErrorListene
 Zowie.setOnInitializationErrorListener {
     // initialization error action
 }
+```
+
+### Setting URL handler
+By default, Zowie Sdk opens URLs using external web browser. If you want to customize this behaviour use `Zowie.setUrlHandler()`
+```
+val zowieUrlHandler = object : ZowieUrlHandler {
+    override fun onUrl(url: String, source: ZowieUrlActionSource): Boolean {
+        return if (YOUR_CONDITION) {
+            // custom url handling
+            return true // block default sdk behaviour
+        } else {
+            // use default sdk behaviour
+            false
+        }
+    }
+}
+Zowie.setUrlHandler(zowieUrlHandler)
 ```
 
 ## Customization
