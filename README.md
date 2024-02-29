@@ -20,7 +20,7 @@ allprojects {
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.1.4'
+    implementation 'ai.zowie:android-sdk:0.2.1'
 }
 
 ```
@@ -52,7 +52,7 @@ val configuration = ZowieConfiguration {
     instanceId = "YOUR_INSTANCE_ID"
     conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL"
     authenticationType = ZowieAuthenticationType.Anonymous
-    chatHost = "OPTIONAL_CHAT_HOST"
+    chatHost = "YOUR_CHAT_HOST"
 }
 
 Zowie.setConfiguration(configuration)
@@ -65,7 +65,7 @@ val configuration =
         .setInstanceId("YOUR_INSTANCE_ID")
         .setConversationInitReferral("OPTIONAL_CONVERSATION_INIT_REFERRAL")
         .setAuthenticationType(ZowieAuthenticationType.Anonymous)
-        .setChatHost("OPTIONAL_CHAT_HOST")
+        .setChatHost("YOUR_CHAT_HOST")
         .build()
 
 Zowie.setConfiguration(configuration)
