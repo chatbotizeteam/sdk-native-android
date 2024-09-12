@@ -1,38 +1,38 @@
-
 # Zowie Android SDK
 
-
-
 ## Installation
+
 1. Add Zowie maven repository to your project's `build.gradle` file:
+
 ```groovy
 allprojects {
     repositories {
         ...
         maven {
-            url  "https://zowie.jfrog.io/artifactory/zowie-android-sdk"
+            url "https://zowie.jfrog.io/artifactory/zowie-android-sdk"
         }
     }
 }
 ```
 
 2. Add the following dependency to your app's `build.gradle` file:
+
 ```groovy
 dependencies {
     ...
-    implementation 'ai.zowie:android-sdk:0.3.0'
+    implementation 'ai.zowie:android-sdk:0.3.1'
 }
 
 ```
+
 ## Usage
-
-
 
 ### Initialization
 
 Zowie Android SDK initialization is a two step process.
 
-In first step, you need to call `Zowie.initalize()` method in your Application's onCreate() method. (Don't forget to register your application class in AndroidManifest.xml)
+In first step, you need to call `Zowie.initalize()` method in your Application's onCreate()method. (
+Don't forget to register your application class in AndroidManifest.xml)
 
 ```kotlin
 class MyApplication : Application() {
@@ -45,8 +45,11 @@ class MyApplication : Application() {
 
 }
 ```
+
 \
-In second step, you have to create `ZowieConfiguration` and set it by calling `Zowie.setConfiguration()`
+In second step, you have to create `ZowieConfiguration` and set it by
+calling `Zowie.setConfiguration()`
+
 ```kotlin
 val configuration = ZowieConfiguration {
     instanceId = "YOUR_INSTANCE_ID"
@@ -57,8 +60,10 @@ val configuration = ZowieConfiguration {
 
 Zowie.setConfiguration(configuration)
 ```
+
 Alternatively you can use **Builder** to create `ZowieConfiguration`.\
 **Builders are available for all classes needed for sdk setup.**
+
 ```kotlin
 val configuration =
     ZowieConfiguration.Builder()
@@ -70,12 +75,16 @@ val configuration =
 
 Zowie.setConfiguration(configuration)
 ```
-If your integration requires token authentication you can replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken()`.
+
+If your integration requires token authentication you can
+replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken()`.
 
 ### Chat UI
+
 Zowie chat is a simple android Fragment.
 An instance can be obtained by calling `Zowie.createChatFragment()`.
 Then it can be shown for example using fragment transaction.
+
 ```kotlin
 val chatFragment = Zowie.createChatFragment()
 supportFragmentManager.beginTransaction().apply {
@@ -83,6 +92,7 @@ supportFragmentManager.beginTransaction().apply {
     commitAllowingStateLoss()
 }
 ```
+
 ### Setting user metadata
 
 You can set user metadata by calling `Zowie.setMetadata()` method.
@@ -105,16 +115,18 @@ val metadata = ZowieMetadata {
 Zowie.setMetadata(
     metadata = metadata,
     onErrorListener = {
-         // on error action
+        // on error action
     },
     onSuccessListener = {
-         // on success action
+        // on success action
     }
 )
 ```
 
 ### FCM notifications
-To receive push notifications you have to call `Zowie.enableNotifications()` with Firebase device token.
+
+To receive push notifications you have to call `Zowie.enableNotifications()` with Firebase device
+token.
 
 ```kotlin
 Zowie.enableNotifications(
@@ -129,6 +141,7 @@ Zowie.enableNotifications(
 ```
 
 If you want to disable notifications call `Zowie.disableNotifications()`
+
 ```kotlin
 Zowie.disableNotifications(
     onErrorListener = {
@@ -140,11 +153,15 @@ Zowie.disableNotifications(
 )
 ```
 
-###  (DEPRECATED) User status
-Setting user status from outside of ZowieSdk is no longer needed an should be removed from client apps. Current version of ZowieSdk checks, and sets user status internally.
+### (DEPRECATED) User status
+
+Setting user status from outside of ZowieSdk is no longer needed an should be removed from client
+apps. Current version of ZowieSdk checks, and sets user status internally.
 
 ### Context
+
 To set context call `Zowie.setContext()`
+
 ```kotlin
 Zowie.setContext(
     contextId = "YOUR_CONTEXT",
@@ -158,7 +175,9 @@ Zowie.setContext(
 ```
 
 ### Anonymous session
+
 To clear Anonymous session call `Zowie.clearAnonymousSession()`
+
 ```
 Zowie.clearAnonymousSession(
     instanceId = "YOUR_INSTANCE_ID",
@@ -172,7 +191,9 @@ Zowie.clearAnonymousSession(
 ```
 
 ### Initialization error
+
 To set initialization error listener call `Zowie.setOnInitializationErrorListener()`
+
 ```
 Zowie.setOnInitializationErrorListener {
     // initialization error action
@@ -180,7 +201,10 @@ Zowie.setOnInitializationErrorListener {
 ```
 
 ### Setting URL handler
-By default, Zowie Sdk opens URLs using external web browser. If you want to customize this behaviour use `Zowie.setUrlHandler()`
+
+By default, Zowie Sdk opens URLs using external web browser. If you want to customize this behaviour
+use `Zowie.setUrlHandler()`
+
 ```
 val zowieUrlHandler = object : ZowieUrlHandler {
     override fun onUrl(url: String, source: ZowieUrlActionSource): Boolean {
@@ -196,13 +220,47 @@ val zowieUrlHandler = object : ZowieUrlHandler {
 Zowie.setUrlHandler(zowieUrlHandler)
 ```
 
+### Setting Referral value
+
+You can use `setReferral` method before or after chat widow is visible.
+
+Setting referral before opening chat window will result in `Waiting` status being emitted by the
+status listener. This call will wait for chat window to be initialized, and then `referral` will be sent.
+If there is no messages in the conversation `referral` value will be used instead of `conversationInitReferral` set
+in `ZowieConfiguration`. 
+
+Setting referral when chat window is already visible and initialized will send a `referral` value
+immediately.
+
+```
+val listener = ZowieReferralStatusListener{
+    when(it){
+        is ZowieReferralStatus.Error -> {
+            // your code
+        }
+        ZowieReferralStatus.Success -> {
+            // your code
+        }
+        ZowieReferralStatus.Waiting -> {
+            // your code
+        }
+    }
+}
+Zowie.setReferral(
+    referral = "YOUR_REFERRAL",
+    listener = listener
+)
+```
+
 ## Customization
 
-You can fully customize chat colors and strings. **Make sure that customization methods are called before showing chat fragment.**
+You can fully customize chat colors and strings. **Make sure that customization methods are called
+before showing chat fragment.**
 
 ### Localization
 
-The only supported language in this SDK is `english`. If you need more localization please provide it as below:
+The only supported language in this SDK is `english`. If you need more localization please provide
+it as below:
 
 ```kotlin
 val zowieStrings = ZowieStrings {
@@ -229,12 +287,12 @@ val zowieStrings = ZowieStrings {
 Zowie.setStrings(zowieStrings)
 ```
 
-
 ### Colors
+
 Feel free to set up color branding however you like.
 
 ```kotlin
-val zowieColors =  ZowieColors {
+val zowieColors = ZowieColors {
     messageStatusSendingErrorColor = YOUR_VALUE
     messageStatusDeliveredColor = YOUR_VALUE
     messageStatusReadColor = YOUR_VALUE
@@ -294,6 +352,7 @@ Zowie.setColors(zowieColors)
 ```
 
 ### Layout configuration
+
 You can customize chat layout behaviour using `Zowie.setLayoutConfiguration()` method.
 
 ```kotlin
@@ -307,8 +366,13 @@ Zowie.setLayoutConfiguration(layoutConfiguration)
 ## Common issues:
 
 ### RxJava3 - ApolloNetworkException thrown as UndeliverableException
-**This issue may occur in versions from `0.0.1` to `0.0.14`. In version `0.0.15` RxJava3 usage was removed from ZowieSdk.**
-During initialization ZowieSdk sets RxJava3 error handler (`RxJavaPlugins.setErrorHandler`) internally but only if it's not set by your app.
-ZowieSdk also uses `apollo-kotlin` internally, and because of that there is a possibility that `ApolloNetworkException` will be thrown as RxJava `UndeliverableException`.
-If your app sets RxJava error handler, be sure to catch `ApolloNetworkException`, otherwise unexpected crashes can occur.
+
+**This issue may occur in versions from `0.0.1` to `0.0.14`. In version `0.0.15` RxJava3 usage was
+removed from ZowieSdk.**
+During initialization ZowieSdk sets RxJava3 error handler (`RxJavaPlugins.setErrorHandler`)
+internally but only if it's not set by your app.
+ZowieSdk also uses `apollo-kotlin` internally, and because of that there is a possibility
+that `ApolloNetworkException` will be thrown as RxJava `UndeliverableException`.
+If your app sets RxJava error handler, be sure to catch `ApolloNetworkException`, otherwise
+unexpected crashes can occur.
 If your app does not set error handler, all `UndeliverableExceptions` will be consumed by ZowieSdk.
