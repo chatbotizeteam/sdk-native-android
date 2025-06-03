@@ -1,5 +1,8 @@
 # Zowie Android SDK
 
+[![Platform](https://img.shields.io/badge/platform-Android-green.svg)](https://github.com/chatbotizeteam/sdk-native-android)
+[![jFrog release](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fzowie.jfrog.io%2Fartifactory%2Fzowie-android-sdk%2Fai%2Fzowie%2Fandroid-sdk%2Fmaven-metadata.xml&label=jfrog)](https://zowie.jfrog.io/artifactory/zowie-android-sdk)
+
 ## Installation
 
 1. Add Zowie maven repository to your project's `build.gradle` file:
@@ -19,8 +22,8 @@ allprojects {
 
 ```groovy
 dependencies {
-    ...
-    implementation 'ai.zowie:android-sdk:0.4.1'
+    // ...
+    implementation "ai.zowie:android-sdk:$zowieVersion"
 }
 
 ```
@@ -53,13 +56,21 @@ calling `Zowie.setConfiguration()`
 ```kotlin
 val configuration = ZowieConfiguration {
     instanceId = "YOUR_INSTANCE_ID"
+    chatHost = "YOUR_CHAT_HOST" // e.g. "yourbrand.chat.getzowie.com/api/v1/core"
+    authenticationType = ZowieAuthenticationType.Anonymous // Or .JwtToken("userID", "conversationID", "token")
+
+
+    // OPTIONAL SETTINGS
+    // Optional: Start a specific flow by referral key
     conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL"
-    authenticationType = ZowieAuthenticationType.Anonymous
-    chatHost = "YOUR_CHAT_HOST"
+
+    // Optional: Show welcome message when chat opens for the first time (default = true)
+    startOnOpen = true
 }
 
 Zowie.setConfiguration(configuration)
 ```
+
 
 Alternatively you can use **Builder** to create `ZowieConfiguration`.\
 **Builders are available for all classes needed for sdk setup.**
@@ -252,6 +263,30 @@ Zowie.setReferral(
 )
 ```
 
+### Setting session timeout
+
+Sets the duration of user inactivity (in milliseconds) after which the session will automatically timeout.
+
+Parameters:
+- `timeout`: `Long`  
+
+The duration (in milliseconds) of inactivity after which the session should be considered expired. 
+For example, `300_000` (5 minutes).
+
+- `onSessionTimeout`: `ZowieOnSessionTimeoutListener` 
+
+> Callback invoked when the session expires due to user inactivity.  
+> **Implementers must close (remove) the Zowie chat fragment inside this callback.**  
+> Once the session times out, the SDK automatically clears all internal session data — **the chat will no longer be functional until a new session is started**.
+
+Usage Example:
+
+```kotlin
+Zowie.setSessionTimeout(timeout = 300_000) {
+    // Close Zowie SDK on sessionTimeout, e.g. requireActivity().finish() 
+}
+```
+
 ## Customization
 
 You can fully customize chat colors and strings. **Make sure that customization methods are called
@@ -285,6 +320,28 @@ val zowieStrings = ZowieStrings {
 }
 
 Zowie.setStrings(zowieStrings)
+```
+
+Current values:
+```
+    newMessageHint = "Your message…"
+    messageStatusDelivered = "Delivered"
+    messageStatusRead = "Read"
+    messageStatusSendingErrorMessage = "We couldn't sent your message."
+    messageStatusSendingErrorTryAgain = "Try again"
+    readAndWriteStoragePermissionAlertTitle = "Permission denied"
+    readAndWriteStoragePermissionAlertMessage = "To download files go to system settings and enable storage permission."
+    readAndWriteStoragePermissionAlertPositiveButton = "Go to settings"
+    readAndWriteStoragePermissionAlertNegativeButton = "No, thanks"
+    attachmentPlaceholderName = "Attachment"
+    attachmentFileMaxSizeExceededErrorMessage = "Attachment can have 8MB max!"
+    couldNotOpenFileErrorMessage = "Could not open file"
+    chatConnectionErrorMessage = "We couldn't connect to our servers"
+    chatConnectionRestoredMessage = "Connection restored"
+    chatHistoryDownloadErrorMessage = "Chat history download error"
+    couldNotOpenWebBrowserErrorMessage = "Could not open web browser"
+    unexpectedErrorMessage = "Unexpected error"
+    fileDownloadErrorMessage = "File download error"
 ```
 
 ### Colors
