@@ -103,6 +103,24 @@ supportFragmentManager.beginTransaction().apply {
     commitAllowingStateLoss()
 }
 ```
+ 
+### Window Insets & Edge-to-Edge
+
+Our SDK automatically handles system window insets (status bar, navigation bar, display cutouts, and on-screen keyboard) to ensure a correct layout in edge-to-edge mode.
+You don’t need to apply additional insets inside the SDK fragment.
+
+If your app applies global window inset handling at the Activity or root container level (e.g., using ViewCompat.setOnApplyWindowInsetsListener), make sure to consume the insets before they propagate to the SDK fragment to avoid double insets (e.g., extra padding at the top or bottom):
+
+```kotlin
+ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
+// Handle your app's views here
+
+    // Prevent the SDK fragment from applying insets twice
+    WindowInsetsCompat.CONSUMED
+}
+```
+
+Alternatively, you can exclude the container hosting the SDK fragment from your global inset handling.
 
 ### Setting user metadata
 
