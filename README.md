@@ -301,8 +301,31 @@ Usage Example:
 
 ```kotlin
 Zowie.setSessionTimeout(timeout = 300_000) {
-    // Close Zowie SDK on sessionTimeout, e.g. requireActivity().finish() 
+    // Close Zowie SDK on sessionTimeout, e.g. requireActivity().finish()
 }
+```
+
+### GenAI events
+
+You can listen for GenAI events triggered from the configured scenario with `Zowie.onVisualAidEvent(eventName, handler)`.
+
+- `eventName` must match backend event name exactly.
+- `params` is delivered as `Any?` (type depends on what was sent from the GenAI scenario):
+    - JSON object -> `Map<String, Any?>`
+    - JSON array -> `List<Any?>`
+    - plain value / invalid JSON -> raw `String`
+    - missing value -> `null`
+
+```kotlin
+Zowie.onVisualAidEvent("meetingDetails") { params ->
+    // handle event payload
+}
+```
+
+To remove a handler for a given event, pass `null`:
+
+```kotlin
+Zowie.onVisualAidEvent("meetingDetails", null)
 ```
 
 ## Customization
