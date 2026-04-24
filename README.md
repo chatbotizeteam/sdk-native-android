@@ -305,12 +305,13 @@ Zowie.setSessionTimeout(timeout = 300_000) {
 }
 ```
 
-### GenAI events
+### Decision Engine events
 
-You can listen for GenAI events triggered from the configured scenario with `Zowie.onVisualAidEvent(eventName, handler)`.
+You can listen for events triggered from the configured scenario with `Zowie.onVisualAidEvent(eventName, handler)`.
+For more information about Decision Engine, see the [Decision Engine API documentation](https://github.com/chatbotizeteam/decission-engine-api#ui).
 
 - `eventName` must match backend event name exactly.
-- `params` is delivered as `Any?` (type depends on what was sent from the GenAI scenario):
+- `params` is delivered as `Any?` (type depends on what was sent from the scenario):
     - JSON object -> `Map<String, Any?>`
     - JSON array -> `List<Any?>`
     - plain value / invalid JSON -> raw `String`
