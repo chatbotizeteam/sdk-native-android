@@ -364,9 +364,9 @@ val zowieUrlHandler = object : ZowieUrlHandler {
 Zowie.setUrlHandler(zowieUrlHandler)
 ```
 
-## Visual Aid events
+## Custom events
 
-You can listen for backend Visual Aid events with `Zowie.on(eventName, handler)`.
+You can listen for backend events with with `Zowie.on(eventName, handler)`.
 
 - `eventName` must match backend event name exactly.
 - `params` is delivered as `Any?`:
