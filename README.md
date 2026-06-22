@@ -25,7 +25,6 @@ dependencies {
     // ...
     implementation "ai.zowie:android-sdk:$zowieVersion"
 }
-
 ```
 
 ## Usage
@@ -34,8 +33,8 @@ dependencies {
 
 Zowie Android SDK initialization is a two step process.
 
-In first step, you need to call `Zowie.initalize()` method in your Application's onCreate()method. (
-Don't forget to register your application class in AndroidManifest.xml)
+In first step, you need to call `Zowie.initialize()` method in your Application's onCreate() method.
+(Don't forget to register your application class in AndroidManifest.xml)
 
 ```kotlin
 class MyApplication : Application() {
@@ -45,50 +44,44 @@ class MyApplication : Application() {
 
         Zowie.initialize(application = this)
     }
-
 }
 ```
 
-\
-In second step, you have to create `ZowieConfiguration` and set it by
-calling `Zowie.setConfiguration()`
+In second step, you have to create `ZowieConfiguration` and set it by calling `Zowie.setConfiguration()`
 
 ```kotlin
-val configuration = ZowieConfiguration {
-    instanceId = "YOUR_INSTANCE_ID"
-    chatHost = "YOUR_CHAT_HOST" // e.g. "yourbrand.chat.getzowie.com/api/v1/core"
-    authenticationType = ZowieAuthenticationType.Anonymous // Or .JwtToken("userID", "conversationID", "token")
-
+val configuration = ZowieConfiguration(
+    instanceId = "YOUR_INSTANCE_ID",
+    chatHost = "YOUR_CHAT_HOST", // e.g. "yourbrand.chat.getzowie.com/api/v1"
+    authenticationType = ZowieAuthenticationType.Anonymous, // Or ZowieAuthenticationType.JwtToken(...)
 
     // OPTIONAL SETTINGS
     // Optional: Start a specific flow by referral key
-    conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL"
+    conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL",
 
     // Optional: Show welcome message when chat opens for the first time (default = true)
     startOnOpen = true
-}
+)
 
 Zowie.setConfiguration(configuration)
 ```
 
+If your integration requires token authentication you can replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken(userId, conversationId, token)`.
 
-Alternatively you can use **Builder** to create `ZowieConfiguration`.\
-**Builders are available for all classes needed for sdk setup.**
+`ZowieConfiguration` supports these optional values:
 
-```kotlin
-val configuration =
-    ZowieConfiguration.Builder()
-        .setInstanceId("YOUR_INSTANCE_ID")
-        .setConversationInitReferral("OPTIONAL_CONVERSATION_INIT_REFERRAL")
-        .setAuthenticationType(ZowieAuthenticationType.Anonymous)
-        .setChatHost("YOUR_CHAT_HOST")
-        .build()
-
-Zowie.setConfiguration(configuration)
-```
-
-If your integration requires token authentication you can
-replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken()`.
+- `conversationInitReferral`: starts a specific flow by referral key.
+- `description`: overrides chat description.
+- `fontColor`: overrides configured font color with `ZowieFontColor.WHITE` or `ZowieFontColor.BLACK`.
+- `logoUrl`: overrides chat logo.
+- `primaryColor`: overrides configured primary color. Use a valid Android color string, e.g. `#FF9900`.
+- `userMessageBackgroundColor`: overrides app-user message bubble color. Use a valid Android color string.
+- `userMessageFontColor`: overrides app-user message font color with `ZowieFontColor.WHITE` or `ZowieFontColor.BLACK`.
+- `startOnOpen`: controls whether the welcome message starts when chat opens for the first time.
+- `title`: overrides chat title.
+- `voiceBlobColor`: overrides voice blob color.
+- `voiceExperienceEnabled`: enables or disables voice entry points locally.
+- `initialConversationMode`: controls the first screen with `ZowieConversationMode.TEXT` or `ZowieConversationMode.VOICE`. Voice mode is used only when voice experience is enabled locally and remotely.
 
 ### Chat UI
 
@@ -97,32 +90,161 @@ An instance can be obtained by calling `Zowie.createChatFragment()`.
 Then it can be shown for example using fragment transaction.
 
 ```kotlin
-val chatFragment = Zowie.createChatFragment()
+val chatFragment = Zowie.createChatFragment() ?: return
 supportFragmentManager.beginTransaction().apply {
     replace(R.id.your_fragment_container, chatFragment)
     commitAllowingStateLoss()
 }
 ```
- 
-### Window Insets & Edge-to-Edge
 
-Our SDK automatically handles system window insets (status bar, navigation bar, display cutouts, and on-screen keyboard) to ensure a correct layout in edge-to-edge mode.
-You don’t need to apply additional insets inside the SDK fragment.
-
-If your app applies global window inset handling at the Activity or root container level (e.g., using ViewCompat.setOnApplyWindowInsetsListener), make sure to consume the insets before they propagate to the SDK fragment to avoid double insets (e.g., extra padding at the top or bottom):
+If the chat is embedded as a Fragment, implement `ZowieOnChatClosedListener`
+on the host `Activity` or parent `Fragment` to control what happens after the user ends the chat.
 
 ```kotlin
-ViewCompat.setOnApplyWindowInsetsListener(root) { v, insets ->
-// Handle your app's views here
+class ChatActivity : AppCompatActivity(), ZowieOnChatClosedListener {
 
-    // Prevent the SDK fragment from applying insets twice
+    override fun onChatClosed() {
+        // Navigate away from the chat, e.g. finish this Activity or pop your navigation stack.
+        finish()
+    }
+}
+```
+
+You can also launch chat as a dedicated sdk `Activity`.
+
+```kotlin
+Zowie.openChat(context = this)
+```
+
+If you want to control activity launch flags or use Activity Result API, create an intent first:
+
+```kotlin
+val intent = Zowie.createChatIntent(context = this) ?: return
+startActivity(intent)
+```
+
+## Full-screen chat (optional)
+
+### What “full-screen” means
+
+**Android can draw under the status bar / navigation bar only when the host Activity is in edge-to-edge mode**  
+(i.e. the window does *not* fit system windows / the app draws behind system bars).
+
+If your Activity is **NOT** edge-to-edge, the system already restricts the app content area below system bars,
+so the chat **cannot** render behind them — no flag in the SDK can change that without modifying the host window.
+
+### Enable / disable in SDK
+
+- `false` (default): chat UI is laid out *below* the status bar / cutout and *above* the navigation bar, with IME handling.
+- `true`: chat UI draws behind status & navigation bars **(requires edge-to-edge on the host Activity)**. IME padding remains so the input stays above the keyboard.
+
+```kotlin
+Zowie.setChatFullScreenEnabled(true)
+```
+
+**Important:** Set the flag **before creating** the chat UI (before adding the fragment). Otherwise you may see a short “jump”.
+
+```kotlin
+Zowie.setChatFullScreenEnabled(true)
+
+val chatFragment = Zowie.createChatFragment() ?: return
+supportFragmentManager.beginTransaction().apply {
+    replace(R.id.your_fragment_container, chatFragment)
+    commitAllowingStateLoss()
+}
+```
+
+### Edge-to-edge requirement
+
+To get true full-screen (draw behind system bars), your Activity must be edge-to-edge.
+
+Typical setup:
+
+```kotlin
+override fun onCreate(savedInstanceState: Bundle?) {
+    enableEdgeToEdge() // or WindowCompat.setDecorFitsSystemWindows(window, false)
+    super.onCreate(savedInstanceState)
+    setContentView(R.layout.activity_chat)
+
+    Zowie.setChatFullScreenEnabled(true)
+
+    val chatFragment = Zowie.createChatFragment() ?: return
+    supportFragmentManager.beginTransaction()
+        .replace(R.id.your_fragment_container, chatFragment)
+        .commitAllowingStateLoss()
+}
+```
+
+### Does SDK force edge-to-edge?
+
+**No.** The SDK does **not** change your Activity window flags automatically.  
+Forcing edge-to-edge from inside an SDK can break the host app’s layout, so it must be controlled by the app.
+
+If your Activity is not edge-to-edge, setting `Zowie.setChatFullScreenEnabled(true)` will **not** make the chat draw under system bars.
+
+## Window Insets & Edge-to-Edge
+
+Our SDK automatically handles system window insets (status bar, navigation bar, display cutouts, and on-screen keyboard) to ensure a correct layout.
+
+If your app applies global window inset handling at the Activity or root container level (e.g., using `ViewCompat.setOnApplyWindowInsetsListener`),
+make sure you don’t apply the same insets again to the container that hosts the SDK fragment (avoid “double padding”).
+
+If needed, consume the insets at your root level:
+
+```kotlin
+ViewCompat.setOnApplyWindowInsetsListener(root) { _, _ ->
+    // Handle your app's views here
+
+    // Prevent double insets in nested content (including SDK fragment)
     WindowInsetsCompat.CONSUMED
 }
 ```
 
-Alternatively, you can exclude the container hosting the SDK fragment from your global inset handling.
+Or exclude the chat container from global inset handling.
 
-### Setting user metadata
+## Chat customization
+
+### Layout configuration
+
+Use `Zowie.setLayoutConfiguration()` to control consultant avatar and consultant name display.
+
+```kotlin
+val layoutConfiguration = ZowieLayoutConfiguration {
+    showConsultantAvatar = true
+    consultantNameMode = ZowieConsultantNameMode.FIRST_NAME
+}
+
+Zowie.setLayoutConfiguration(layoutConfiguration)
+```
+
+Available `ZowieConsultantNameMode` values are:
+
+- `HIDDEN`
+- `FIRST_NAME`
+- `FULL_NAME`
+
+### File upload configuration
+
+Use `Zowie.setFileUploadConfiguration()` to enable file upload and restrict allowed file types.
+
+```kotlin
+val fileUploadConfiguration = ZowieFileUploadConfiguration {
+    allowFileUpload = true
+    allowFileTypes = listOf(
+        ZowieFileType.JPEG,
+        ZowieFileType.PNG,
+        ZowieFileType.GIF,
+        ZowieFileType.MP4,
+        ZowieFileType.PDF
+    )
+}
+
+Zowie.setFileUploadConfiguration(fileUploadConfiguration)
+```
+
+Supported `ZowieFileType` values are: `JPEG`, `PNG`, `GIF`, `MP4`, `PDF`, `MP3`, `AAC`, `DOC`, `DOCX`, `TXT`, `ZIP`, `RAR`, `ZIP7`, `HTML`, `SPX`, `MOV`, `AVI`, `XLS`, `XLSX`, and `CSV`.
+
+## Setting user metadata
 
 You can set user metadata by calling `Zowie.setMetadata()` method.
 
@@ -152,10 +274,9 @@ Zowie.setMetadata(
 )
 ```
 
-### FCM notifications
+## FCM notifications
 
-To receive push notifications you have to call `Zowie.enableNotifications()` with Firebase device
-token.
+To receive push notifications you have to call `Zowie.enableNotifications()` with Firebase device token.
 
 ```kotlin
 Zowie.enableNotifications(
@@ -182,12 +303,7 @@ Zowie.disableNotifications(
 )
 ```
 
-### (DEPRECATED) User status
-
-Setting user status from outside of ZowieSdk is no longer needed an should be removed from client
-apps. Current version of ZowieSdk checks, and sets user status internally.
-
-### Context
+## Context
 
 To set context call `Zowie.setContext()`
 
@@ -203,11 +319,11 @@ Zowie.setContext(
 )
 ```
 
-### Anonymous session
+## Anonymous session
 
 To clear Anonymous session call `Zowie.clearAnonymousSession()`
 
-```
+```kotlin
 Zowie.clearAnonymousSession(
     instanceId = "YOUR_INSTANCE_ID",
     onErrorListener = {
@@ -219,27 +335,26 @@ Zowie.clearAnonymousSession(
 )
 ```
 
-### Initialization error
+## Initialization error
 
 To set initialization error listener call `Zowie.setOnInitializationErrorListener()`
 
-```
+```kotlin
 Zowie.setOnInitializationErrorListener {
     // initialization error action
 }
 ```
 
-### Setting URL handler
+## Setting URL handler
 
-By default, Zowie Sdk opens URLs using external web browser. If you want to customize this behaviour
-use `Zowie.setUrlHandler()`
+By default, Zowie Sdk opens URLs using external web browser. If you want to customize this behaviour use `Zowie.setUrlHandler()`
 
-```
+```kotlin
 val zowieUrlHandler = object : ZowieUrlHandler {
     override fun onUrl(url: String, source: ZowieUrlActionSource): Boolean {
         return if (YOUR_CONDITION) {
             // custom url handling
-            return true // block default sdk behaviour
+            true // block default sdk behaviour
         } else {
             // use default sdk behaviour
             false
@@ -249,19 +364,55 @@ val zowieUrlHandler = object : ZowieUrlHandler {
 Zowie.setUrlHandler(zowieUrlHandler)
 ```
 
-### Setting Referral value
+## Visual Aid events
 
-You can use `setReferral` method before or after chat widow is visible.
+You can listen for backend Visual Aid events with `Zowie.on(eventName, handler)`.
 
-Setting referral before opening chat window will result in `Waiting` status being emitted by the
-status listener. This call will wait for chat window to be initialized, and then `referral` will be sent.
-If there is no messages in the conversation `referral` value will be used instead of `conversationInitReferral` set
-in `ZowieConfiguration`. 
+- `eventName` must match backend event name exactly.
+- `params` is delivered as `Any?`:
+    - JSON object -> `Map<String, Any?>`
+    - JSON array -> `List<Any?>`
+    - plain value / invalid JSON -> raw `String`
+    - missing value -> `null`
 
-Setting referral when chat window is already visible and initialized will send a `referral` value
-immediately.
-
+```kotlin
+Zowie.on("meetingDetails") { params ->
+    // handle event payload
+}
 ```
+
+To remove a handler for a given event, pass `null`:
+
+```kotlin
+Zowie.on("meetingDetails", null)
+```
+
+## AI Session Notice "More" handler
+
+By default, tapping the "More" link on the AI session notice opens a built-in bottom sheet showing the full message. You can override this behaviour (in both text and voice chat) by setting your own handler with `Zowie.setAiSessionNoticeMoreHandler()`. The handler receives the notice `header` and `message`.
+
+```kotlin
+Zowie.setAiSessionNoticeMoreHandler { header, message ->
+    // handle the tap yourself, e.g. show your own dialog
+}
+```
+
+To restore the default bottom sheet, pass `null`:
+
+```kotlin
+Zowie.setAiSessionNoticeMoreHandler(null)
+```
+
+## Setting Referral value
+
+You can use `setReferral` method before or after chat window is visible.
+
+Setting referral before opening chat window will result in `Waiting` status being emitted by the status listener. This call will wait for chat window to be initialized, and then `referral` will be sent.
+If there is no messages in the conversation `referral` value will be used instead of `conversationInitReferral` set in `ZowieConfiguration`.
+
+Setting referral when chat window is already visible and initialized will send a `referral` value immediately.
+
+```kotlin
 val listener = ZowieReferralStatusListener{
     when(it){
         is ZowieReferralStatus.Error -> {
@@ -281,17 +432,17 @@ Zowie.setReferral(
 )
 ```
 
-### Setting session timeout
+## Setting session timeout
 
 Sets the duration of user inactivity (in milliseconds) after which the session will automatically timeout.
 
 Parameters:
-- `timeout`: `Long`  
+- `timeout`: `Long`
 
-The duration (in milliseconds) of inactivity after which the session should be considered expired. 
+The duration (in milliseconds) of inactivity after which the session should be considered expired.
 For example, `300_000` (5 minutes).
 
-- `onSessionTimeout`: `ZowieOnSessionTimeoutListener` 
+- `onSessionTimeout`: `ZowieOnSessionTimeoutListener`
 
 > Callback invoked when the session expires due to user inactivity.  
 > **Implementers must close (remove) the Zowie chat fragment inside this callback.**  
@@ -305,173 +456,15 @@ Zowie.setSessionTimeout(timeout = 300_000) {
 }
 ```
 
-### Decision Engine events
+## Breaking changes from previous versions
 
-You can listen for events triggered from the configured scenario with `Zowie.onVisualAidEvent(eventName, handler)`.
-For more information about Decision Engine, see the [Decision Engine API documentation](https://github.com/chatbotizeteam/decission-engine-api#ui).
+This release changes several public APIs:
 
-- `eventName` must match backend event name exactly.
-- `params` is delivered as `Any?` (type depends on what was sent from the scenario):
-    - JSON object -> `Map<String, Any?>`
-    - JSON array -> `List<Any?>`
-    - plain value / invalid JSON -> raw `String`
-    - missing value -> `null`
-
-```kotlin
-Zowie.onVisualAidEvent("meetingDetails") { params ->
-    // handle event payload
-}
-```
-
-To remove a handler for a given event, pass `null`:
-
-```kotlin
-Zowie.onVisualAidEvent("meetingDetails", null)
-```
-
-## Customization
-
-You can fully customize chat colors and strings. **Make sure that customization methods are called
-before showing chat fragment.**
-
-### Localization
-
-The only supported language in this SDK is `english`. If you need more localization please provide
-it as below:
-
-```kotlin
-val zowieStrings = ZowieStrings {
-    newMessageHint = YOUR_VALUE
-    messageStatusDelivered = YOUR_VALUE
-    messageStatusRead = YOUR_VALUE
-    messageStatusSendingErrorMessage = YOUR_VALUE
-    messageStatusSendingErrorTryAgain = YOUR_VALUE
-    readAndWriteStoragePermissionAlertTitle = YOUR_VALUE
-    readAndWriteStoragePermissionAlertMessage = YOUR_VALUE
-    readAndWriteStoragePermissionAlertPositiveButton = YOUR_VALUE
-    readAndWriteStoragePermissionAlertNegativeButton = YOUR_VALUE
-    attachmentPlaceholderName = YOUR_VALUE
-    attachmentFileMaxSizeExceededErrorMessage = YOUR_VALUE
-    couldNotOpenFileErrorMessage = YOUR_VALUE
-    chatConnectionErrorMessage = YOUR_VALUE
-    chatConnectionRestoredMessage = YOUR_VALUE
-    chatHistoryDownloadErrorMessage = YOUR_VALUE
-    couldNotOpenWebBrowserErrorMessage = YOUR_VALUE
-    unexpectedErrorMessage = YOUR_VALUE
-    fileDownloadErrorMessage = YOUR_VALUE
-}
-
-Zowie.setStrings(zowieStrings)
-```
-
-Current values:
-```
-    newMessageHint = "Your message…"
-    messageStatusDelivered = "Delivered"
-    messageStatusRead = "Read"
-    messageStatusSendingErrorMessage = "We couldn't sent your message."
-    messageStatusSendingErrorTryAgain = "Try again"
-    readAndWriteStoragePermissionAlertTitle = "Permission denied"
-    readAndWriteStoragePermissionAlertMessage = "To download files go to system settings and enable storage permission."
-    readAndWriteStoragePermissionAlertPositiveButton = "Go to settings"
-    readAndWriteStoragePermissionAlertNegativeButton = "No, thanks"
-    attachmentPlaceholderName = "Attachment"
-    attachmentFileMaxSizeExceededErrorMessage = "Attachment can have 8MB max!"
-    couldNotOpenFileErrorMessage = "Could not open file"
-    chatConnectionErrorMessage = "We couldn't connect to our servers"
-    chatConnectionRestoredMessage = "Connection restored"
-    chatHistoryDownloadErrorMessage = "Chat history download error"
-    couldNotOpenWebBrowserErrorMessage = "Could not open web browser"
-    unexpectedErrorMessage = "Unexpected error"
-    fileDownloadErrorMessage = "File download error"
-```
-
-### Colors
-
-Feel free to set up color branding however you like.
-
-```kotlin
-val zowieColors = ZowieColors {
-    messageStatusSendingErrorColor = YOUR_VALUE
-    messageStatusDeliveredColor = YOUR_VALUE
-    messageStatusReadColor = YOUR_VALUE
-    messageAuthorNameTextColor = YOUR_VALUE
-    sectionDateTimeTextColor = YOUR_VALUE
-    messageDateTimeTextColor = YOUR_VALUE
-    sentMessageBackgroundColor = YOUR_VALUE
-    sentMessageContentsColor = YOUR_VALUE
-    sentMessageImageUploadLoadingColor = YOUR_VALUE
-    sentMessageVideoUploadLoadingColor = YOUR_VALUE
-    sentMessageImagePlaceholderLoadingColor = YOUR_VALUE
-    sentMessageImagePlaceholderBackgroundColor = YOUR_VALUE
-    sentMessageLinksColor = YOUR_VALUE
-    incomingMessageBackgroundColor = YOUR_VALUE
-    incomingMessagePrimaryTextColor = YOUR_VALUE
-    incomingMessageSecondaryTextColor = YOUR_VALUE
-    incomingMessageFileIconColor = YOUR_VALUE
-    incomingMessageFileDownloadSuccessIconColor = YOUR_VALUE
-    incomingMessageDownloadFileIconColor = YOUR_VALUE
-    incomingMessageDownloadFileLoadingColor = YOUR_VALUE
-    incomingMessageImagePlaceholderLoadingColor = YOUR_VALUE
-    incomingMessageImagePlaceholderBackgroundColor = YOUR_VALUE
-    incomingMessageLinksColor = YOUR_VALUE
-    backgroundColor = YOUR_VALUE
-    newMessageTextColor = YOUR_VALUE
-    newMessageHintTextColor = YOUR_VALUE
-    sendAttachmentButtonColor = YOUR_VALUE
-    sendTextButtonColor = YOUR_VALUE
-    separatorColor = YOUR_VALUE
-    chatMessagesLoadingColor = YOUR_VALUE
-    quickButtonBackgroundColor = YOUR_VALUE
-    quickButtonBackgroundPressedColor = YOUR_VALUE
-    quickButtonTextColor = YOUR_VALUE
-    quickButtonPressedStrokeColor = YOUR_VALUE
-    quickButtonStrokeColor = YOUR_VALUE
-    actionButtonBackgroundColor = YOUR_VALUE
-    actionButtonBackgroundPressedColor = YOUR_VALUE
-    actionButtonTextColor = YOUR_VALUE
-    videoThumbnailPlaceholderColor = YOUR_VALUE
-    notificationErrorContentsColor = YOUR_VALUE
-    notificationErrorBackgroundColor = YOUR_VALUE
-    notificationSuccessContentsColor = YOUR_VALUE
-    notificationSuccessBackgroundColor = YOUR_VALUE
-    zowieLogoButtonBackgroundPressedColor = YOUR_VALUE
-    zowieLogoButtonPressedStrokeColor = YOUR_VALUE
-    playVideoButtonBackgroundColor = YOUR_VALUE
-    playVideoButtonBackgroundPressedColor = YOUR_VALUE
-    playVideoButtonPlayIconColor = YOUR_VALUE
-    typingAnimationTintColor = YOUR_VALUE
-    announcementBackgroundColor = YOUR_VALUE
-    announcementStrokeColor = YOUR_VALUE
-    announcementTextColor = YOUR_VALUE
-    announcementIconColor = YOUR_VALUE
-}
-
-Zowie.setColors(zowieColors)
-```
-
-### Layout configuration
-
-You can customize chat layout behaviour using `Zowie.setLayoutConfiguration()` method.
-
-```kotlin
-val layoutConfiguration = ZowieLayoutConfiguration {
-    showConsultantAvatar = YOUR_VALUE
-    consultantNameMode = YOUR_VALUE
-}
-Zowie.setLayoutConfiguration(layoutConfiguration)
-```
-
-## Common issues:
-
-### RxJava3 - ApolloNetworkException thrown as UndeliverableException
-
-**This issue may occur in versions from `0.0.1` to `0.0.14`. In version `0.0.15` RxJava3 usage was
-removed from ZowieSdk.**
-During initialization ZowieSdk sets RxJava3 error handler (`RxJavaPlugins.setErrorHandler`)
-internally but only if it's not set by your app.
-ZowieSdk also uses `apollo-kotlin` internally, and because of that there is a possibility
-that `ApolloNetworkException` will be thrown as RxJava `UndeliverableException`.
-If your app sets RxJava error handler, be sure to catch `ApolloNetworkException`, otherwise
-unexpected crashes can occur.
-If your app does not set error handler, all `UndeliverableExceptions` will be consumed by ZowieSdk.
+- `ZowieConfiguration` is now a Kotlin `data class`. Use the constructor instead of `ZowieConfiguration { ... }` or `ZowieConfiguration.Builder()`.
+- `ZowieConfiguration.fontColor` and `ZowieConfiguration.userMessageFontColor` use `ZowieFontColor?` instead of `String?`.
+- `Zowie.onVisualAidEvent(eventName, handler)` was renamed to `Zowie.on(eventName, handler)`.
+- `Zowie.setChatMode()` and `ZowieChatMode` were removed. Use `voiceExperienceEnabled` and `initialConversationMode` in `ZowieConfiguration`.
+- `Zowie.setColors()` and `ZowieColors` were removed. Use remote configuration and the local overrides available in `ZowieConfiguration`.
+- `Zowie.setStrings()` and `ZowieStrings` were removed.
+- `Zowie.setUserStatus()` was removed. The SDK manages user status internally.
+- `Zowie.createChatFragment()` and `Zowie.createChatIntent()` can return `null` when remote configuration cannot be loaded. Handle the nullable result before opening chat.
