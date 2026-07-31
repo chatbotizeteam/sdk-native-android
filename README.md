@@ -91,17 +91,52 @@ Set `chatHost` to `<brand-tag>.chat.getzowie.com/api/v1`, for example `your-bran
 
 ### Chat UI
 
-Zowie chat is a simple android Fragment.
-An instance can be obtained by calling `Zowie.createChatFragment()`.
-Then it can be shown for example using fragment transaction.
+Zowie chat is a simple Android Fragment. Create it with the default visible toolbar or pass the
+toolbar choice explicitly for an embedded chat, then add it with a fragment transaction.
 
 ```kotlin
-val chatFragment = Zowie.createChatFragment() ?: return
+val chatFragment = Zowie.createChatFragment(
+    showChatToolbar = false
+) ?: return
 supportFragmentManager.beginTransaction().apply {
     replace(R.id.your_fragment_container, chatFragment)
     commitAllowingStateLoss()
 }
 ```
+
+Calling `Zowie.createChatFragment()` without the argument keeps the toolbar visible. Java callers
+can use `Zowie.INSTANCE.createChatFragment(false)` to hide it.
+
+Keep the returned Fragment when the host provides its own chat controls. For example, when the
+SDK toolbar is hidden, the host can open the same settings sheet from a custom button:
+
+```kotlin
+settingsButton.setOnClickListener {
+    val settingsShown = Zowie.showChatSettings(chatFragment)
+    if (!settingsShown) {
+        // The Fragment is not resumed, text chat is not active, or this is not a Zowie chat Fragment.
+    }
+}
+```
+
+Java integrations use the same fragment-specific option and settings API:
+
+```java
+Fragment chatFragment = Zowie.INSTANCE.createChatFragment(false);
+if (chatFragment == null) return;
+
+getSupportFragmentManager().beginTransaction()
+    .replace(R.id.your_fragment_container, chatFragment)
+    .commit();
+
+settingsButton.setOnClickListener(view -> {
+    boolean settingsShown = Zowie.INSTANCE.showChatSettings(chatFragment);
+});
+```
+
+`showChatSettings()` must be called on the main thread after the embedded Fragment is visible and resumed. It returns `true` when the request is accepted or the sheet is already visible. Resolve the current Fragment from `FragmentManager` after Activity or Fragment recreation instead of keeping a stale reference.
+
+Toolbar hiding is supported only for chats embedded with `createChatFragment()`. Chats opened through `createChatIntent()` or `openChat()` always retain the toolbar so that **End chat** remains accessible. Removing an embedded Fragment only closes its UI and is not equivalent to the settings sheet's **End chat** operation.
 
 If the chat is embedded as a Fragment, implement `ZowieOnChatClosedListener`
 on the host `Activity` or parent `Fragment` to control what happens after the user ends the chat.
