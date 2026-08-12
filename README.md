@@ -315,6 +315,39 @@ Zowie.setMetadata(
 )
 ```
 
+`locale` accepts a BCP-47 language tag such as `pl`, `cs-CZ`, or `zh-Hant-TW`. It is an input for
+backend region selection. If `locale` is `null` or blank, the SDK uses the host app/device locale as
+that input.
+
+After the remote configuration is verified, SDK-owned native strings use the locale mapping
+associated with the selected enabled backend region, not the original metadata or device locale.
+Locally bundled translations are therefore used only when the backend configuration associates
+their locale with the selected region. An unsupported backend locale, a region without a locale
+mapping, or a default region with multiple possible languages renders SDK-owned text in English.
+Backend-provided text remains tied to the selected region.
+
+The verified native locale is captured when a chat Fragment or Intent is created; call
+`Zowie.setMetadata()` before creating chat UI. Changing metadata does not relocalize an already open
+chat.
+
+Apps distributed as Android App Bundles must ensure that resources for backend-selected SDK locales
+are installed. Because the selected region language may differ from the device language, the
+simplest option is to disable language splitting in the host application module:
+
+```groovy
+android {
+    bundle {
+        language {
+            enableSplit = false
+        }
+    }
+}
+```
+
+Alternatively, the host application can download additional language resources on demand. Without
+either approach, Google Play may omit a requested SDK language when it does not match the device
+locale.
+
 ## FCM notifications
 
 To receive push notifications you have to call `Zowie.enableNotifications()` with Firebase device token.
