@@ -52,7 +52,7 @@ In second step, you have to create `ZowieConfiguration` and set it by calling `Z
 ```kotlin
 val configuration = ZowieConfiguration(
     instanceId = "YOUR_INSTANCE_ID",
-    chatHost = "YOUR_BRAND_TAG.chat.getzowie.com/api/v1"
+    chatHost = "YOUR_BRAND_TAG.chat.getzowie.com/api/v1",
     authenticationType = ZowieAuthenticationType.Anonymous, // Or ZowieAuthenticationType.JwtToken(...)
 
     // OPTIONAL SETTINGS
@@ -60,13 +60,18 @@ val configuration = ZowieConfiguration(
     conversationInitReferral = "OPTIONAL_CONVERSATION_INIT_REFERRAL",
 
     // Optional: Show welcome message when chat opens for the first time (default = true)
-    startOnOpen = true
+    startOnOpen = true,
+
+    // Optional: Use an app drawable for the AI Session Notice icon
+    // aiSessionNoticeIconResId = R.drawable.custom_ai_notice
 )
 
 Zowie.setConfiguration(configuration)
 ```
 
 If your integration requires token authentication you can replace `ZowieAuthenticationType.Anonymous` with `ZowieAuthenticationType.JwtToken(userId, conversationId, token)`.
+
+The AI Session Notice icon defaults to the SDK star icon. Set `aiSessionNoticeIconResId` to a drawable resource from your app to customize it; the SDK applies the same subdued gray tint used by the default icon.
 
 ### `chatHost` format
 
@@ -76,6 +81,7 @@ Set `chatHost` to `<brand-tag>.chat.getzowie.com/api/v1`, for example `your-bran
 
 `ZowieConfiguration` supports these optional values:
 
+- `allowEndChat`: controls whether the chat settings modal offers the "End chat" option (default = `true`). See [Hiding the "End chat" option](#hiding-the-end-chat-option).
 - `conversationInitReferral`: starts a specific flow by referral key.
 - `description`: overrides chat description.
 - `fontColor`: overrides configured font color with `ZowieFontColor.WHITE` or `ZowieFontColor.BLACK`.
@@ -134,7 +140,7 @@ settingsButton.setOnClickListener(view -> {
 });
 ```
 
-`showChatSettings()` must be called on the main thread after the embedded Fragment is visible and resumed. It returns `true` when the request is accepted or the sheet is already visible. Resolve the current Fragment from `FragmentManager` after Activity or Fragment recreation instead of keeping a stale reference.
+`showChatSettings()` must be called on the main thread after the embedded Fragment is visible and resumed. It returns `true` when the request is accepted or the sheet is already visible. Resolve the current Fragment from `FragmentManager` after Activity or Fragment recreation instead of keeping a stale reference. It also returns `false` when the settings modal has no options to show, see [Hiding the "End chat" option](#hiding-the-end-chat-option).
 
 Toolbar hiding is supported only for chats embedded with `createChatFragment()`. Chats opened through `createChatIntent()` or `openChat()` always retain the toolbar so that **End chat** remains accessible. Removing an embedded Fragment only closes its UI and is not equivalent to the settings sheet's **End chat** operation.
 
@@ -476,6 +482,26 @@ To restore the default bottom sheet, pass `null`:
 ```kotlin
 Zowie.setAiSessionNoticeMoreHandler(null)
 ```
+
+## Hiding the "End chat" option
+
+The chat settings modal is opened from the settings icon in the chat toolbar. Set
+`allowEndChat = false` in `ZowieConfiguration` to hide the **End chat** option:
+
+```kotlin
+val configuration = ZowieConfiguration(
+    instanceId = "YOUR_INSTANCE_ID",
+    chatHost = "YOUR_BRAND_TAG.chat.getzowie.com/api/v1",
+    authenticationType = ZowieAuthenticationType.Anonymous,
+    allowEndChat = false
+)
+```
+
+**End chat** is the only entry the modal offers, so with `allowEndChat = false` the modal has
+nothing left to show. The settings icon then disappears from the toolbar entirely and
+`Zowie.showChatSettings()` returns `false`.
+
+Omitting `allowEndChat` keeps the current behaviour (`true`).
 
 ## Setting Referral value
 
