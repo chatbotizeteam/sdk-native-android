@@ -85,6 +85,7 @@ Set `chatHost` to `<brand-tag>.chat.getzowie.com/api/v1`, for example `your-bran
 - `conversationInitReferral`: starts a specific flow by referral key.
 - `description`: overrides chat description.
 - `fontColor`: overrides configured font color with `ZowieFontColor.WHITE` or `ZowieFontColor.BLACK`.
+- `typography`: accepts app-owned `res/font` resource IDs for regular, medium, and semibold native SDK text.
 - `logoUrl`: overrides chat logo.
 - `primaryColor`: overrides configured primary color. Use a valid Android color string, e.g. `#FF9900`.
 - `userMessageBackgroundColor`: overrides app-user message bubble color. Use a valid Android color string.
@@ -94,6 +95,41 @@ Set `chatHost` to `<brand-tag>.chat.getzowie.com/api/v1`, for example `your-bran
 - `voiceBlobColor`: overrides voice blob color.
 - `voiceExperienceEnabled`: enables or disables voice entry points locally.
 - `initialConversationMode`: controls the first screen with `ZowieConversationMode.TEXT` or `ZowieConversationMode.VOICE`. Voice mode is used only when voice experience is enabled locally and remotely.
+- `themeMode`: optionally chooses `ZowieThemeMode.LIGHT`, `DARK`, or `SYSTEM_DEFAULT`.
+
+### Custom fonts
+
+Bundle TTF or OTF files in your app's `res/font` directory, then pass their resource IDs when configuring the SDK:
+
+```kotlin
+ZowieConfiguration(
+    authenticationType = ZowieAuthenticationType.Anonymous,
+    chatHost = "your-brand-tag.chat.getzowie.com/api/v1",
+    instanceId = "your-instance-id",
+    typography = ZowieTypography(
+        regularFontResId = R.font.brand_regular,
+        mediumFontResId = R.font.brand_medium,
+        semiboldFontResId = R.font.brand_semibold,
+    ),
+)
+```
+
+Each role falls back independently to the corresponding bundled Inter font when its ID is omitted, zero, or cannot be loaded. When no typography configuration is supplied, the SDK uses bundled Inter as its default for native SDK text. The setting covers native SDK text, including chat, voice, input, sheets, and SDK dialogs. WebView content and system permission dialogs have their own typography. Set the configuration before opening chat; close and reopen SDK UI to apply a later change.
+
+### Color theme
+
+The SDK chooses the chat theme in this order:
+
+1. The current `Zowie.setThemeMode(...)` override, if set.
+2. `ZowieConfiguration.themeMode`, if set.
+3. `design.color.mode` from the selected region in the API configuration.
+4. The host app's effective theme, if the API omits `mode`.
+
+`LIGHT` and `DARK` force that theme. `SYSTEM_DEFAULT` follows the host app's effective `uiMode`, even if a lower-priority source specifies another mode. The API's `SYSTEM_DEFAULT` and a missing API `mode` both follow the host theme. Once the mode is resolved, the SDK uses `primaryColor` and `fontColor` from the API's `light` or `dark` scheme, plus the matching SDK color tokens for other UI roles. Local color overrides such as `primaryColor` and `fontColor` remain active in both themes.
+
+To change an open chat without resetting its conversation, call `Zowie.setThemeMode(ZowieThemeMode.DARK)` on the main thread. Pass `ZowieThemeMode.SYSTEM_DEFAULT` to explicitly follow the host theme; pass `null` to remove the runtime override and return to `ZowieConfiguration.themeMode`, then the API mode if the configuration value is absent. The SDK-owned Activity updates its system-bar icon contrast; an embedded Fragment leaves the host Activity's window settings to the host app.
+
+For an embedded Fragment to keep its current draft and voice session when the device theme changes, the host Activity should handle `uiMode` configuration changes (for example, `android:configChanges="uiMode"`). Otherwise Android may recreate the host Activity and its Fragment.
 
 ### Chat UI
 
