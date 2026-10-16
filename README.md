@@ -485,11 +485,9 @@ Zowie.setUrlHandler(zowieUrlHandler)
 You can listen for backend events with with `Zowie.on(eventName, handler)`.
 
 - `eventName` must match backend event name exactly.
-- `params` is delivered as `Any?`:
-    - JSON object -> `Map<String, Any?>`
-    - JSON array -> `List<Any?>`
-    - plain value / invalid JSON -> raw `String`
-    - missing value -> `null`
+- `params` is delivered as `Map<String, String>`:
+    - only string values are delivered; keys with any other value (numbers, booleans, `null`, nested objects, arrays) are omitted
+    - missing or invalid params -> empty map
 
 ```kotlin
 Zowie.on("meetingDetails") { params ->
@@ -599,7 +597,7 @@ This release changes several public APIs:
 - `ZowieConfiguration` is now a Kotlin `data class`. Use the constructor instead of `ZowieConfiguration { ... }` or `ZowieConfiguration.Builder()`.
 - `ZowieConfiguration.fontColor` and `ZowieConfiguration.userMessageFontColor` use `ZowieFontColor?` instead of `String?`.
 - `ZowieConfiguration.chatHost` changed from the legacy `api-chat.chatbotize.com` host to the brand-tag API base `<brand-tag>.chat.getzowie.com/api/v1`, for example `your-brand-tag.chat.getzowie.com/api/v1`. Do not append `/core`; the SDK adds it for its core-service requests.
-- `Zowie.onVisualAidEvent(eventName, handler)` was renamed to `Zowie.on(eventName, handler)`.
+- `Zowie.onVisualAidEvent(eventName, handler)` was renamed to `Zowie.on(eventName, handler)`. The handler now receives `params` as `Map<String, String>` instead of `Any?`.
 - `Zowie.setChatMode()` and `ZowieChatMode` were removed. Use `voiceExperienceEnabled` and `initialConversationMode` in `ZowieConfiguration`.
 - `Zowie.setColors()` and `ZowieColors` were removed. Use remote configuration and the local overrides available in `ZowieConfiguration`.
 - `Zowie.setStrings()` and `ZowieStrings` were removed.
